@@ -1,8 +1,3 @@
-"""
-23CSE301 – Lab 02 (Revised)
-A1–A9 Modular Python Solutions (FINAL)
-"""
-
 import pandas as pd
 import numpy as np
 import statistics as st
@@ -12,15 +7,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
-# --------------------------
+# =====================================================
 # Helper: Load Data
-# --------------------------
+# =====================================================
 def load_excel_data(excel, sheet):
     return pd.read_excel(excel, sheet_name=sheet)
 
-# --------------------------
-# A1: Linear Algebra
-# --------------------------
+# =====================================================
+# A1: Linear Algebra (Purchase Data)
+# =====================================================
 def analyze_purchase_data(data):
     A = data.iloc[:, 1:4]  # Features (columns 1–3)
     C = data.iloc[:, 4:5]  # Target (column 4)
@@ -30,9 +25,9 @@ def analyze_purchase_data(data):
     unit_costs = np.dot(np.linalg.pinv(A), C)
     return A, C, dim, num_vectors, rank, unit_costs
 
-# --------------------------
+# =====================================================
 # A2: Classification (RICH/POOR)
-# --------------------------
+# =====================================================
 def label_rich_poor(data, threshold=200):
     return np.where(data['Payment (Rs)'] > threshold, "RICH", "POOR")
 
@@ -45,59 +40,96 @@ def train_rich_poor_classifier(X, y):
     acc = accuracy_score(y_test, model.predict(X_test))
     return model, acc
 
-# --------------------------
+# =====================================================
 # A3: IRCTC Stock Analysis
-# --------------------------
+# =====================================================
 def stock_statistics(data):
     mean_price = st.mean(data['Price'])
     var_price = st.variance(data['Price'])
     return mean_price, var_price
 
 def mean_by_day(data, day):
-    day_data = data[data['Day'] == day]['Price']
-    return st.mean(day_data) if not day_data.empty else np.nan
+    return st.mean(data['Price'][data['Day'] == day])
 
 def mean_by_month(data, month):
-    month_data = data[data['Month'] == month]['Price']
-    return st.mean(month_data) if not month_data.empty else np.nan
+    return st.mean(data['Price'][data['Month'] == month])
 
 def probability_of_loss(data):
-    return (data['Chg%'] < 0).mean()
+    loss = data['Chg%'].apply(lambda x: 1 if x < 0 else 0)
+    return sum(loss) / len(loss)
 
 def probability_profit_wednesday(data):
     wed_data = data[data['Day'] == 'Wed']
-    return (wed_data['Chg%'] > 0).mean() if not wed_data.empty else np.nan
+    return (wed_data['Chg%'] > 0).mean()
 
 def conditional_profit_given_wednesday(data):
     wed_data = data[data['Day'] == 'Wed']
     return (wed_data['Chg%'] > 0).sum() / len(wed_data) if len(wed_data) > 0 else np.nan
 
-def plot_chg_vs_day(data):
-    plt.figure(figsize=(8, 5))
+def stock_analysis(data):
+    print("\n===== A3: IRCTC Stock Analysis =====")
+    mean_price, var_price = stock_statistics(data)
+    print(f"Population Mean Price: {mean_price}, Variance: {var_price}")
+    print(f"Wednesday Sample Mean: {mean_by_day(data, 'Wed')}")
+    print(f"April Sample Mean: {mean_by_month(data, 'Apr')}")
+    print(f"Probability of Loss: {probability_of_loss(data)}")
+    print(f"Probability of Profit on Wednesday: {probability_profit_wednesday(data)}")
+    print(f"Conditional Probability(Profit|Wednesday): {conditional_profit_given_wednesday(data)}")
+
+    plt.figure(figsize=(6, 4))
     sns.scatterplot(x=data['Day'], y=data['Chg%'])
-    plt.title("Change % vs Day of Week")
-    plt.xlabel("Day")
-    plt.ylabel("Chg%")
+    plt.title('Chg% vs Day of Week')
     plt.show()
 
-# --------------------------
+# =====================================================
 # A4: Thyroid Data Exploration
-# --------------------------
+# =====================================================
 def thyroid_exploration(th_data):
-    numerical_cols = th_data.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    categorical_cols = th_data.select_dtypes(include=['object', 'bool']).columns.tolist()
-    missing_values = th_data.isnull().sum()
-    return numerical_cols, categorical_cols, missing_values
+    print("\n===== A4: Data Exploration =====")
 
-# --------------------------
-# A5: JC and SMC
-# --------------------------
+    numeric_cols = th_data.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    categorical_cols = th_data.select_dtypes(include=['object', 'bool']).columns.tolist()
+    print(f"Numeric Columns: {numeric_cols}")
+    print(f"Categorical Columns: {categorical_cols}")
+
+    print("\nColumn Types & Suggested Encoding:")
+    for col in th_data.columns:
+        unique_vals = th_data[col].dropna().unique()
+        if len(unique_vals) == 2:
+            print(f"{col}: Binary → Label Encoding")
+        elif col in numeric_cols:
+            print(f"{col}: Continuous (Numeric)")
+        else:
+            print(f"{col}: Nominal → One-Hot Encoding")
+
+    print("\nNumeric Column Ranges:")
+    for col in numeric_cols:
+        print(f"{col}: Min={th_data[col].min()}, Max={th_data[col].max()}")
+
+    print("\nMissing Values:")
+    print(th_data.isnull().sum())
+
+    print("\nOutliers (IQR Method):")
+    for col in numeric_cols:
+        Q1, Q3 = th_data[col].quantile([0.25, 0.75])
+        IQR = Q3 - Q1
+        outliers = ((th_data[col] < (Q1 - 1.5 * IQR)) | (th_data[col] > (Q3 + 1.5 * IQR))).sum()
+        print(f"{col}: {outliers} outliers")
+
+    print("\nMean & Std Dev of Numeric Columns:")
+    for col in numeric_cols:
+        print(f"{col}: Mean={th_data[col].mean()}, Std={th_data[col].std()}")
+
+    return numeric_cols, categorical_cols
+
+# =====================================================
+# A5: Similarity (JC & SMC)
+# =====================================================
 def jaccard(B1, B2):
     f11 = sum(a == 1 and b == 1 for a, b in zip(B1, B2))
     f10 = sum(a == 1 and b == 0 for a, b in zip(B1, B2))
     f01 = sum(a == 0 and b == 1 for a, b in zip(B1, B2))
-    denom = f11 + f10 + f01
-    return f11 / denom if denom > 0 else np.nan
+    return f11 / (f11 + f10 + f01) if (f11 + f10 + f01) > 0 else np.nan
 
 def smc(B1, B2):
     f11 = sum(a == 1 and b == 1 for a, b in zip(B1, B2))
@@ -106,128 +138,120 @@ def smc(B1, B2):
     f01 = sum(a == 0 and b == 1 for a, b in zip(B1, B2))
     return (f11 + f00) / (f11 + f00 + f10 + f01)
 
-# --------------------------
+def binary_similarity(th_data):
+    print("\n===== A5: Jaccard & SMC =====")
+    binary_cols = [col for col in th_data.columns if th_data[col].nunique() == 2]
+    binary_df = th_data[binary_cols].applymap(lambda x: 1 if str(x).lower() in ['t', 'yes', 'y', '1'] else 0)
+    v1, v2 = binary_df.iloc[0], binary_df.iloc[1]
+    print(f"Jaccard Coefficient: {jaccard(v1, v2)}")
+    print(f"Simple Matching Coefficient: {smc(v1, v2)}")
+    return binary_df
+
+# =====================================================
 # A6: Cosine Similarity
-# --------------------------
+# =====================================================
 def cosine_similarity(v1, v2):
-    dot_product = sum(a * b for a, b in zip(v1, v2))
-    norm1 = np.sqrt(sum(a ** 2 for a in v1))
-    norm2 = np.sqrt(sum(b ** 2 for b in v2))
+    dot_product = np.dot(v1, v2)
+    norm1, norm2 = np.linalg.norm(v1), np.linalg.norm(v2)
     return dot_product / (norm1 * norm2) if norm1 and norm2 else 0
 
-# --------------------------
-# A7: Heatmaps
-# --------------------------
-def compute_heatmaps(df, n=20):
-    df = df.applymap(lambda x: str(x).lower() if isinstance(x, str) else x)
-    binary_df = (
-        df.replace({'t': 1, 'f': 0, '?': np.nan})
-          .apply(pd.to_numeric, errors='coerce')
-          .fillna(0)
-          .astype(int)
-          .iloc[:n]
-    )
+def cosine_on_full_vectors(th_data):
+    print("\n===== A6: Cosine Similarity =====")
+    df_numeric = th_data.applymap(lambda x: 1 if str(x).lower() in ['t', 'yes', 'y', '1'] else x)
+    df_numeric = df_numeric.apply(pd.to_numeric, errors='coerce').fillna(0)
+    v1, v2 = df_numeric.iloc[0], df_numeric.iloc[1]
+    print(f"Cosine Similarity: {cosine_similarity(v1, v2)}")
+    return df_numeric
 
-    JC = pd.DataFrame([[jaccard(binary_df.iloc[i], binary_df.iloc[j]) for j in range(n)] for i in range(n)])
-    SMC = pd.DataFrame([[smc(binary_df.iloc[i], binary_df.iloc[j]) for j in range(n)] for i in range(n)])
-    COS = pd.DataFrame([[cosine_similarity(binary_df.iloc[i], binary_df.iloc[j]) for j in range(n)] for i in range(n)])
+# =====================================================
+# A7: Heatmap (JC, SMC, COS on first 20 rows)
+# =====================================================
+def heatmap_similarity(df_numeric, n=20):
+    print("\n===== A7: Heatmap Similarities =====")
+    df20 = df_numeric.iloc[:n]
+    JC = pd.DataFrame([[jaccard(df20.iloc[i], df20.iloc[j]) for j in range(n)] for i in range(n)])
+    SMC = pd.DataFrame([[smc(df20.iloc[i], df20.iloc[j]) for j in range(n)] for i in range(n)])
+    COS = pd.DataFrame([[cosine_similarity(df20.iloc[i], df20.iloc[j]) for j in range(n)] for i in range(n)])
 
-    plt.figure(figsize=(30, 8))
+    plt.figure(figsize=(18, 5))
     plt.subplot(1, 3, 1)
     sns.heatmap(JC, cmap='Blues')
-    plt.title('Jaccard Coefficient')
+    plt.title("Jaccard Coefficient")
 
     plt.subplot(1, 3, 2)
     sns.heatmap(SMC, cmap='Greens')
-    plt.title('SMC')
+    plt.title("Simple Matching Coefficient")
 
     plt.subplot(1, 3, 3)
     sns.heatmap(COS, cmap='Oranges')
-    plt.title('Cosine Similarity')
-
+    plt.title("Cosine Similarity")
     plt.tight_layout()
     plt.show()
 
-    return JC, SMC, COS
-
-# --------------------------
-# A8: Imputation
-# --------------------------
-def impute_data(th_data, use_mean, use_median, use_mode):
+# =====================================================
+# A8: Data Imputation
+# =====================================================
+def impute_data(df, use_mean, use_median, use_mode):
+    print("\n===== A8: Data Imputation =====")
     for col in use_mean:
-        th_data[col] = th_data[col].fillna(th_data[col].mean())
+        df[col] = df[col].fillna(df[col].mean())
     for col in use_median:
-        th_data[col] = th_data[col].fillna(th_data[col].median())
+        df[col] = df[col].fillna(df[col].median())
     for col in use_mode:
-        th_data[col] = th_data[col].fillna(th_data[col].mode()[0])
-    return th_data
+        df[col] = df[col].fillna(df[col].mode()[0])
+    print("Missing after imputation:", df.isnull().sum().sum())
+    return df
 
-# --------------------------
-# A9: Normalization
-# --------------------------
-def normalize_data(th_data):
-    numeric_cols = th_data.select_dtypes(include=['float64', 'int64']).columns.tolist()
-    minmax = th_data.copy()
-    zscore = th_data.copy()
+# =====================================================
+# A9: Data Normalization
+# =====================================================
+def normalize_data(df):
+    print("\n===== A9: Data Normalization =====")
+    numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+    minmax = df.copy()
+    zscore = df.copy()
     for col in numeric_cols:
-        minmax[col] = (th_data[col] - th_data[col].min()) / (th_data[col].max() - th_data[col].min())
-        zscore[col] = (th_data[col] - th_data[col].mean()) / th_data[col].std()
+        minmax[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
+        zscore[col] = (df[col] - df[col].mean()) / df[col].std()
+    print("Normalization Done.")
     return minmax, zscore
 
-# --------------------------
-# MAIN
-# --------------------------
+# =====================================================
+# MAIN PROGRAM
+# =====================================================
 if __name__ == "__main__":
     excel = r"C:/Users/bramj/OneDrive/Desktop/ML_Lab2/Lab Session Data.xlsx"
 
-    # --- A1 ---
+    # A1 & A2
     purchase_data = load_excel_data(excel, 'Purchase data')
     A, C, dim, num_vecs, rank, unit_costs = analyze_purchase_data(purchase_data)
-    print("A1:", dim, num_vecs, rank, unit_costs)
-
-    # --- A2 ---
+    print("\n===== A1 =====")
+    print(f"Dimensionality: {dim}, Vectors: {num_vecs}, Rank: {rank}, Unit Costs: {unit_costs.T}")
     labels = label_rich_poor(purchase_data)
     model, acc = train_rich_poor_classifier(A, labels)
-    print("A2 Accuracy:", acc)
+    print("\n===== A2 =====")
+    print(f"Classifier Accuracy: {acc}")
 
-    # --- A3 ---
+    # A3
     stock_data = load_excel_data(excel, 'IRCTC Stock Price')
-    mean_price, var_price = stock_statistics(stock_data)
-    mean_wed = mean_by_day(stock_data, 'Wed')
-    mean_apr = mean_by_month(stock_data, 'Apr')
-    p_loss = probability_of_loss(stock_data)
-    p_profit_wed = probability_profit_wednesday(stock_data)
-    p_cond_profit_wed = conditional_profit_given_wednesday(stock_data)
+    stock_analysis(stock_data)
 
-    print("\nA3:")
-    print("Population Mean:", mean_price, "Variance:", var_price)
-    print("Mean (Wed):", mean_wed, "Mean (Apr):", mean_apr)
-    print("P(Loss):", p_loss)
-    print("P(Profit on Wed):", p_profit_wed)
-    print("P(Profit | Wed):", p_cond_profit_wed)
-    plot_chg_vs_day(stock_data)
-
-    # --- A4 ---
+    # A4
     thyroid_data = load_excel_data(excel, 'thyroid0387_UCI')
-    num_cols, cat_cols, missing = thyroid_exploration(thyroid_data)
-    print("\nA4:", num_cols, cat_cols, missing.sum())
+    numeric_cols, cat_cols = thyroid_exploration(thyroid_data)
 
-    # --- A5 ---
-    B1 = [1 if str(x).lower() == 't' else 0 for x in thyroid_data['on thyroxine']]
-    B2 = [1 if str(x).lower() == 't' else 0 for x in thyroid_data['query on thyroxine']]
-    print("\nA5 JC:", jaccard(B1, B2), "SMC:", smc(B1, B2))
+    # A5 & A6
+    binary_df = binary_similarity(thyroid_data)
+    df_numeric = cosine_on_full_vectors(thyroid_data)
 
-    # --- A6 ---
-    print("A6 Cosine Similarity:", cosine_similarity(B1, B2))
+    # A7
+    heatmap_similarity(df_numeric, n=20)
 
-    # --- A7 ---
-    compute_heatmaps(thyroid_data, n=15)
+    # A8
+    thyroid_data.replace("?", np.nan, inplace=True)
+    imputed = impute_data(thyroid_data, use_mean=['T3'], use_median=['TSH', 'TT4'], use_mode=['sex'])
 
-    # --- A8 ---
-    thyroid_data.replace("?", pd.NA, inplace=True)
-    imputed = impute_data(thyroid_data, ['T3'], ['TSH', 'TT4'], ['sex'])
-    print("A8 Missing After Imputation:", imputed.isna().sum().sum())
-
-    # --- A9 ---
+    # A9
     minmax, zscore = normalize_data(imputed)
-    print("A9 MinMax (head):\n", minmax.head())
+    print("MinMax Example:\n", minmax.head())
+    print("Z-Score Example:\n", zscore.head())
