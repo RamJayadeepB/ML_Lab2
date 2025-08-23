@@ -131,7 +131,7 @@ def jaccard(B1, B2):
     f01 = sum(a == 0 and b == 1 for a, b in zip(B1, B2))
     return f11 / (f11 + f10 + f01) if (f11 + f10 + f01) > 0 else np.nan
 
-def smc(B1, B2):
+def smc(B1, B2): #Simple Matching Coefficient (SMC)
     f11 = sum(a == 1 and b == 1 for a, b in zip(B1, B2))
     f00 = sum(a == 0 and b == 0 for a, b in zip(B1, B2))
     f10 = sum(a == 1 and b == 0 for a, b in zip(B1, B2))
@@ -255,3 +255,4 @@ if __name__ == "__main__":
     minmax, zscore = normalize_data(imputed)
     print("MinMax Example:\n", minmax.head())
     print("Z-Score Example:\n", zscore.head())
+
