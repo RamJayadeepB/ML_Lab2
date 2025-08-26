@@ -96,11 +96,11 @@ def thyroid_exploration(th_data):
     for col in th_data.columns:
         unique_vals = th_data[col].dropna().unique()
         if len(unique_vals) == 2:
-            print(f"{col}: Binary → Label Encoding")
+            print(f"{col}: Binary -> Label Encoding")
         elif col in numeric_cols:
             print(f"{col}: Continuous (Numeric)")
         else:
-            print(f"{col}: Nominal → One-Hot Encoding")
+            print(f"{col}: Nominal -> One-Hot Encoding")
 
     print("\nNumeric Column Ranges:")
     for col in numeric_cols:
@@ -121,6 +121,7 @@ def thyroid_exploration(th_data):
         print(f"{col}: Mean={th_data[col].mean()}, Std={th_data[col].std()}")
 
     return numeric_cols, categorical_cols
+
 
 # =====================================================
 # A5: Similarity (JC & SMC)
@@ -220,7 +221,7 @@ def normalize_data(df):
 # MAIN PROGRAM
 # =====================================================
 if __name__ == "__main__":
-    excel = r"C:/Users/bramj/OneDrive/Desktop/ML_Lab2/Lab Session Data.xlsx"
+    excel = r"C:\Users\DELL\Downloads\Lab Session Data (1).xlsx"
 
     # A1 & A2
     purchase_data = load_excel_data(excel, 'Purchase data')
@@ -255,4 +256,3 @@ if __name__ == "__main__":
     minmax, zscore = normalize_data(imputed)
     print("MinMax Example:\n", minmax.head())
     print("Z-Score Example:\n", zscore.head())
-
