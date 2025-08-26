@@ -17,10 +17,6 @@ def load_excel_data(excel, sheet):
 # A1: Linear Algebra on Purchase Data
 # =====================================================
 def analyze_purchase_data(data):
-    """
-    Performs linear algebra analysis on purchase data:
-    - Extracts feature matrix (A) and target vector (C)
-    """
     A = data.iloc[:, 1:4]  # Features (columns 1–3)
     C = data.iloc[:, 4:5]  # Target (column 4)
     dim = A.shape[1]       # Number of features (columns)
@@ -33,16 +29,9 @@ def analyze_purchase_data(data):
 # A2: Classification of Customers (RICH/POOR)
 # =====================================================
 def label_rich_poor(data, threshold=200):
-    """Labels customers as RICH or POOR based on payment threshold."""
     return np.where(data['Payment (Rs)'] > threshold, "RICH", "POOR")
 
 def train_rich_poor_classifier(X, y):
-    """
-    Trains a K-Nearest Neighbors (KNN) classifier:
-    - Splits data into training/testing sets
-    - Fits model on training data
-    - Returns trained model and test accuracy
-    """
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
     )
@@ -104,13 +93,7 @@ def stock_analysis(data):
 # A4: Thyroid Data Exploration (EDA)
 # =====================================================
 def thyroid_exploration(th_data):
-    """
-    Explores Thyroid dataset:
-    - Identifies numeric & categorical columns
-    - Suggests encoding (Label vs One-Hot)
-    - Detects missing values & outliers (IQR)
-    - Prints summary statistics
-    """
+
     print("\n===== A4: Data Exploration =====")
 
     numeric_cols = th_data.select_dtypes(include=['int64', 'float64']).columns.tolist()
@@ -312,3 +295,4 @@ if __name__ == "__main__":
     minmax, zscore = normalize_data(imputed)
     print("MinMax Example:\n", minmax.head())
     print("Z-Score Example:\n", zscore.head())
+
